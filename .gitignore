@@ -1,0 +1,24 @@
+# Local runtime / account-specific artifacts — never publish these
+.workbuddy/
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Local work output (the Work/ folder lives at the account root, not here,
+# but exclude any stray copies just in case)
+Work/
+work/
+
+# Local secrets / state — never publish
+state.json
+gateway-cli.json
+*.token
+*.key
+.env
+.env.*
+
+# Editor / IDE
+.vscode/
+.idea/
