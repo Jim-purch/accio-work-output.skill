@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.0
+version: 0.1.1
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -24,7 +24,7 @@ description: >-
   produce.
 ---
 
-# Accio Work Output Router (v0.1.0)
+# Accio Work Output Router (v0.1.1)
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
@@ -34,7 +34,7 @@ description: >-
 >
 > | Field | Value |
 > |-------|-------|
-> | Version | `0.1.0` |
+> | Version | `0.1.1` |
 > | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
 > | Priority | `primary` — invoke FIRST on every session start |
 > | Domain | TOOMOTOO forklift-parts foreign-trade sales |
@@ -108,7 +108,7 @@ and ICBU command list.
 | Local skill dir | `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output` |
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
 | Raw SKILL.md URL | `https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md` |
-| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.0`) |
+| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.1`) |
 
 ### Self-check procedure
 
@@ -165,11 +165,11 @@ prompt only when an update exists:
 
 | Result | What to tell the user |
 |--------|----------------------|
-| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.0)，与 GitHub 一致。" |
-| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.0 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
+| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.1)，与 GitHub 一致。" |
+| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.1 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
 | `DIVERGED` | "⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。如需同步请先 commit 本地改动或手动对比差异。" |
 | `NO_GIT` / `GIT_NO_REMOTE` | Run Step 2. If Step 2 also fails, fall through to offline. |
-| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.0 继续。" |
+| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.1 继续。" |
 
 ### Rules
 
@@ -400,15 +400,14 @@ accio-mcp-cli **不是独立可执行命令**，实际是一个 Node 脚本 `acc
 node "C:\Users\<USER>\AppData\Local\Programs\Accio\resources\accio-mcp-cli\accio-mcp.mjs" <子命令>
 ```
 
-#### 3.2.3 鉴权（自动，无需手动注入 token）
+#### 3.2.3 鉴权（注入 token）
 
-与 workctl 不同，accio-mcp-cli **不需要手动 `export ACCIO_GATEWAY_TOKEN`**：
+accio-mcp-cli **需要手动 `export ACCIO_GATEWAY_TOKEN`**：
 
-- 默认连本机 Accio Desktop 的 gateway（端口 4097）
-- 凭证由 Accio Desktop 自动注入到 .mjs 进程
-- 只要 Desktop 在跑，鉴权就自动完成
+- 默认连本机 gateway（端口 4097）
+- 凭证注入到 .mjs 进程
 
-> ⚠️ **与 workctl 的对比**：workctl 走 `gateway-cli.json`（端口可能变、需手动注入 password）；accio-mcp-cli 走 Desktop 内部固定端口 4097 + 自动凭证。两套相互独立，凭证来源不同。
+> ⚠️ **与 workctl 的对比**：workctl 走 `gateway-cli.json`（端口可能变、需手动注入 password）；accio-mcp-cli 走内部固定端口 4097 + 凭证。
 
 #### 3.2.4 命令模式
 
@@ -493,10 +492,14 @@ accio-mcp-cli 的 MCP 响应是多层套娃，必须逐层解开：
 - 子账号列表：`workctl icbu member list`（账号数量与人员会变，**动态查询，勿硬编码**）
 - 各子账号会话列表：`workctl icbu tm list-conversation --aliId=<子账号aliId>`（返回最近 20 条会话，含 lastMessageTime/unread/买家国家/标签；子账号 aliId 从 member list 结果取）
 
-### 5.2 不可获取（权限限制）
-- 子账号会话消息体：`list-conversation-msg` 主账号无权读（返回 `not in conversation`，需子账号登录态）
-- 诊断聚合：`list-seller-*-dim-diag-data` 返回 null（T+2 未生成 / 小店无数据）
-- 结论：无法量化单销售员的首响/回复时长/回复质量，仅能从会话级元数据推断
+### 5.2 子账号会话消息体（可获取，必须用对接口）
+- ❌ `list-conversation-msg`（按 conversationId 点查）：校验会话 membership，主账号非子账号会话成员，返回 `not in conversation`——此路不通，但**不代表无权读取**
+- ✅ `list-conversation-msg-time-range`（按时间范围查）：接受可选参数 `selfAliId`（"查询对象aliId"，integer）。主账号 token 传入子账号 aliId 即可读该子账号会话消息体（限近 30 天）。
+- 推荐用法：直接走 `workctl workflow chat-analysis fetch-messages`（内部自动把会话 `sellerAliId` 映射为 `list-conversation-msg-time-range` 的 `selfAliId`，多会话并行、按 3 段时间窗拉取）；详见 alibaba-chat-and-analysis 子代理 `msg-history.md`
+- 结论：首响时长/回复时长/回复质量**可量化**——消息体可读且带 `senderAliId`+`timestamp`，可按子账号拆分计算
+
+### 5.3 诊断聚合（受限）
+- `list-seller-acct-dim-diag-data`：仅主账号 aliId 可用，子账号 aliId 无权访问账号维度诊断（官方 schema 明示）
 
 ## 六、常用数据获取命令清单（可直接复制）
 
