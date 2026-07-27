@@ -8,7 +8,6 @@
 
 | Field | Value |
 |-------|-------|
-| Version | `0.1.0` |
 | Status | initial public release |
 | Priority | `primary` — invoke FIRST on every session start |
 | Domain | TOOMOTOO (Tianjin) International Trading — forklift parts (ICBU cgs seller) |
@@ -69,11 +68,11 @@ stops at the first that works:
 
 The user sees one short line:
 
-- `✅ 已自检：本 skill 为最新版本 (v0.1.0)，与 GitHub 一致。`
-- `🔄 检测到 GitHub 有新版本 (本地 v0.1.0 → 远端 vX.Y.Z)。是否拉取更新？` — only
+- `✅ 已自检：本 skill 为最新版本，与 GitHub 一致。`
+- `🔄 检测到 GitHub 有新版本。是否拉取更新？` — only
   *prompts*; never auto-pulls. The user may have local edits in flight.
 - `⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。…`
-- `ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.0 继续。`
+- `ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地版本继续。`
 
 Rules: run once per session (not per message), never block the session on the
 check, never auto-update without user confirmation, never leak sensitive paths
@@ -148,7 +147,7 @@ self-check will fall back to Step 2 (raw `SKILL.md` version compare).
 ### Verify
 
 Open a new work session in the account and check that the agent reports
-`✅ 已自检：本 skill 为最新版本 (v0.1.0)，与 GitHub 一致。` on the first message.
+`✅ 已自检：本 skill 为最新版本，与 GitHub 一致。` on the first message.
 
 ## Updating
 
@@ -162,21 +161,6 @@ git -C "$SKILL_DIR" pull origin main
 The self-check will prompt you when a new version is available — confirm
 before pulling, especially if you have local edits to `SKILL.md`.
 
-## Versioning
-
-This skill follows semantic versioning:
-
-- **MAJOR**: incompatible changes to the bootstrap contract (e.g. the
-  self-check procedure, the `Work/` routing rule, or the ICBU auth flow
-  change in a way that breaks downstream skills).
-- **MINOR**: backward-compatible additions (new `workctl icbu` subcommands
-  documented, new pitfalls, new downstream skill references).
-- **PATCH**: fixes to wording, paths, or tables that don't change behavior.
-
-| Version | Date | Notes |
-|---------|------|-------|
-| `0.1.0` | 2026-07-27 | Initial public release. Adds `version` / `github_repo` / `priority` / `domain` frontmatter, session-start self-check, and priority entry-point positioning for TOOMOTOO forklift-parts foreign-trade sales. Carries the full workctl + accio-mcp auth knowledge base. |
-
 ## Contributing
 
 This skill is purpose-built for the TOOMOTOO account and is published
@@ -188,7 +172,7 @@ ICBU seller account:
 2. Re-verify the workctl / accio-mcp auth flow on the new account — the
    mechanism is stable, but runtime values (gateway port, sub-account list,
    plugin set) are account-specific.
-3. Bump the `version` field and add a row to the versioning table.
+3. Bump the `version` field in `SKILL.md` frontmatter.
 
 ## License
 
