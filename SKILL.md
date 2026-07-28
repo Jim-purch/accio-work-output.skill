@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.4
+version: 0.1.6
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -25,7 +25,7 @@ description: >-
   directory — this skill imposes no special output folder.
 ---
 
-# Accio Work Output Router (v0.1.4)
+# Accio Work Output Router
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
@@ -34,7 +34,7 @@ description: >-
 >
 > | Field | Value |
 > |-------|-------|
-> | Version | `0.1.4` |
+> | Version | see frontmatter `version:` at the top of this file (single source of truth) |
 > | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
 > | Priority | `primary` — invoke FIRST on every session start |
 > | Domain | TOOMOTOO forklift-parts foreign-trade sales |
@@ -95,57 +95,49 @@ and ICBU command list.
 
 | Name | Value |
 |------|-------|
-| Local skill dir | `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output` |
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
-| Raw SKILL.md URL | `https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md` |
-| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.4`) |
 
 ### Self-check procedure
 
 Run these steps once per session, in order. Stop at the first step that
 succeeds and skip the rest.
 
-**Step 1 — git fetch (preferred, works when the local dir is a git clone).**
+> **Why GitHub-only (no local-file read):** On a freshly installed machine
+> the skill directory (`.../skills/accio-work-output/`) may be empty or its
+> files not yet materialized, so reading the on-disk `SKILL.md` to get the
+> local version is unreliable. The local version is already known from this
+> skill's loaded frontmatter (`version:` field — in the agent's memory at
+> load time), and the remote version is fetched from the GitHub public repo.
+> GitHub is the single source of truth for "latest"; the on-disk local file
+> is never read for the check.
+
+**Step 1 — fetch remote version from GitHub (the only network call).**
+
+Fetch only the remote `SKILL.md` frontmatter and read its `version:` field.
+The local version is the `version:` field of **this skill's own frontmatter**
+(known in-memory from loading this skill — **do NOT** re-read it from the
+on-disk `SKILL.md` via `sed`/shell, which breaks on empty new-install dirs).
 
 ```bash
-# Inside the local skill dir; <USER> and <ID> substituted at runtime.
-SKILL_DIR="C:/Users/<USER>/.accio/accounts/<ID>/skills/accio-work-output"
-if [ -d "$SKILL_DIR/.git" ]; then
-  git -C "$SKILL_DIR" fetch --quiet origin main 2>/dev/null
-  LOCAL=$(git -C "$SKILL_DIR" rev-parse HEAD 2>/dev/null)
-  REMOTE=$(git -C "$SKILL_DIR" rev-parse origin/main 2>/dev/null)
-  if [ -n "$LOCAL" ] && [ -n "$REMOTE" ]; then
-    if [ "$LOCAL" = "$REMOTE" ]; then
-      echo "UP_TO_DATE"
-    elif git -C "$SKILL_DIR" merge-base --is-ancestor "$LOCAL" "$REMOTE" 2>/dev/null; then
-      echo "BEHIND"
-    else
-      echo "DIVERGED"
-    fi
-  else
-    echo "GIT_NO_REMOTE"
-  fi
-else
-  echo "NO_GIT"
-fi
-```
-
-**Step 2 — raw SKILL.md version compare (fallback when no local `.git`).**
-Fetch only the remote `SKILL.md` frontmatter and compare the `version:` field
-against the local one. Cheaper than a full clone; use when the skill folder
-was installed by copy rather than `git clone`.
-
-```bash
+# Remote version — from the GitHub public repo (raw). No <USER>/<ID> needed.
 REMOTE_VER=$(curl -fsSL --max-time 8 \
   "https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md" \
   | sed -n 's/^version:[[:space:]]*//p' | head -1)
-LOCAL_VER=$(sed -n 's/^version:[[:space:]]*//p' "$SKILL_DIR/SKILL.md" | head -1)
-# Compare semver (major.minor.patch). If REMOTE_VER > LOCAL_VER → BEHIND.
+# LOCAL_VER = the version: field of THIS skill's loaded frontmatter
+# (the single hard-coded version at the top of this file) — already in the
+# agent's memory; do NOT read from disk.
+# Compare semver (major.minor.patch):
+#   REMOTE_VER == LOCAL_VER → UP_TO_DATE
+#   REMOTE_VER >  LOCAL_VER → BEHIND
+#   REMOTE_VER <  LOCAL_VER → AHEAD (local dev copy newer than published)
 ```
 
-**Step 3 — offline / network blocked.** If both steps above fail (no network,
-GitHub unreachable, sandbox blocks the request), skip silently and proceed
-with the local copy. Do not block the user's work.
+If `curl` returns a non-empty `REMOTE_VER`, report the comparison result
+(table below) and stop.
+
+**Step 2 — offline / network blocked.** If Step 1 fails (no network, GitHub
+unreachable, sandbox blocks the request, or `REMOTE_VER` is empty), skip
+silently and proceed with the local copy. Do not block the user's work.
 
 ### How to report to the user
 
@@ -153,13 +145,18 @@ After the check, surface the result to the user in **one short line** (Chinese,
 since this account's primary user is a TOOMOTOO sales rep) plus an action
 prompt only when an update exists:
 
+> Placeholders `{LOCAL_VER}` / `{REMOTE_VER}` below are filled from the
+> self-check variables above (`LOCAL_VER` = this skill's frontmatter
+> `version:`, `REMOTE_VER` = the value fetched from GitHub). Never hard-code
+> the version number in these messages — it must always come from the single
+> source of truth at the top of this file.
+
 | Result | What to tell the user |
 |--------|----------------------|
-| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.4)，与 GitHub 一致。" |
-| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.4 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
-| `DIVERGED` | "⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。如需同步请先 commit 本地改动或手动对比差异。" |
-| `NO_GIT` / `GIT_NO_REMOTE` | Run Step 2. If Step 2 also fails, fall through to offline. |
-| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.4 继续。" |
+| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v{LOCAL_VER})，与 GitHub 一致。" |
+| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v{LOCAL_VER} → 远端 v{REMOTE_VER})。是否拉取更新？" — wait for user confirmation before updating; never auto-overwrite a skill the user is actively editing. To update: if the skill dir is a `git clone`, run `git -C <skill dir> pull origin main`; otherwise re-copy / re-install the skill from the repo. |
+| `AHEAD` | "ℹ️ 本地版本 (v{LOCAL_VER}) 高于 GitHub 已发布版本，可能是本地开发版，无需更新。" |
+| offline (Step 2) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v{LOCAL_VER} 继续。" |
 
 ### Rules
 
@@ -170,7 +167,7 @@ prompt only when an update exists:
 3. **Run once per session, not per message.** Cache the result in memory for
    the rest of the session; don't re-fetch on every user turn.
 4. **Don't leak sensitive paths or tokens** in the report line — show only the
-   version numbers and the one-line `git pull` hint.
+   version numbers and the one-line update hint.
 5. After reporting, immediately continue with the rest of the bootstrap
    (expose the ICBU/workctl layer) and hand off to whatever the user
    actually asked for.
