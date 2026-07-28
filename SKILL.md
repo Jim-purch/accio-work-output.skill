@@ -8,14 +8,10 @@ description: >-
   PRIORITY entry-point skill for TOOMOTOO forklift-parts foreign-trade sales
   work inside this .accio account — invoke FIRST at the start of EVERY work
   session, before any other skill, even when the user just says hi / opens the
-  workspace / asks any forklift-parts sales question. Three bootstrap jobs it
+  workspace / asks any forklift-parts sales question. Two bootstrap jobs it
   runs on session start: (1) self-check this skill's version against GitHub
   (https://github.com/Jim-purch/accio-work-output.skill.git) and notify the
-  user of updates; (2) route ALL generated deliverables into a `Work/`
-  subdirectory of the account root — never scatter files at the top level;
-  trigger whenever the user asks to create/save/export/generate/write any file
-  or whenever a deliverable is about to be produced, even if the user did not
-  say "Work"; (3) provide the Alibaba.com (ICBU) workctl CLI & accio-mcp
+  user of updates; (2) provide the Alibaba.com (ICBU) workctl CLI & accio-mcp
   authentication workflow for pulling real-time store data — trigger when the
   user needs Ali ICBU data access, gateway token injection, or hits workctl
   desktop_not_attached errors. After bootstrap, hand off to the matching
@@ -25,17 +21,16 @@ description: >-
   the task touches negotiation, first-reply, follow-up scripts, quoting,
   price reduction, customer reactivation, or the sales process (enumerate
   reference/ and match by each doc's header summary — never assume a fixed
-  doc list), while still enforcing the Work/ routing rule for every
-  deliverable they produce.
+  doc list). Generated files are written to the agent's default working
+  directory — this skill imposes no special output folder.
 ---
 
 # Accio Work Output Router (v0.1.4)
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
-> `.accio` account, self-checks for GitHub updates, then enforces the `Work/`
-> routing rule and exposes the ICBU/workctl data layer that all downstream
-> sales skills depend on.
+> `.accio` account, self-checks for GitHub updates and exposes the
+> ICBU/workctl data layer that all downstream sales skills depend on.
 >
 > | Field | Value |
 > |-------|-------|
@@ -49,20 +44,15 @@ description: >-
 
 You are operating inside a `.accio` account workspace (the directory under
 `.accio/accounts/<accountId>`) bound to TOOMOTOO (Tianjin) International
-Trading — an Alibaba.com (ICBU) cgs seller of forklift parts. This account
-root is shared by many subsystems (`skills/`, `conversations/`, `agents/`,
-`.workbuddy/`, memory files, etc.) and gets noisy fast if every generated
-file is dropped at the top level.
+Trading — an Alibaba.com (ICBU) cgs seller of forklift parts.
 
 This skill is the **priority entry point** for all forklift-parts
-foreign-trade sales work here. It does three things, in order, on every
+foreign-trade sales work here. It does two things, in order, on every
 session start:
 
 1. **Self-check GitHub updates** (see §"会话启动自检" below) — compare local
    `version` against the published repo and notify the user.
-2. **Route every deliverable into `Work/`** — the single home for produced
-   files at the account root.
-3. **Expose the ICBU/workctl data layer** — so downstream sales skills can
+2. **Expose the ICBU/workctl data layer** — so downstream sales skills can
    pull real-time store data (store diagnose, conversations, RFQ, products,
    ads, trade, logistics) without re-deriving the auth flow.
 
@@ -74,12 +64,9 @@ read the matching playbook, then combine its methods with live workctl data
 and the dynamically discovered companion skills (§九) to give a complete,
 context-specific answer.
 
-The rule: **any file you generate as a deliverable goes into `Work/`**, a
-folder at the account root. That keeps the account root readable and makes it
-trivial for the user to find, back up, or delete everything you produced.
-
-This is not a feature the user has to remember to ask for — it is the default
-behavior whenever you are producing work inside this account.
+Generated files (reports, exports, scripts, etc.) are written to the agent's
+default working directory — no special output folder is enforced, since a
+hard-coded folder may be unwritable on some setups.
 
 ## When to trigger
 
@@ -90,18 +77,8 @@ FIRST, before any other skill, whenever any of these apply:
   sends the first message of a session, asks anything forklift-parts-sales
   related, or just says hi). On this first trigger, run the **会话启动自检**
   flow below before doing anything else.
-- The user asks to create / write / save / export / generate a file.
-- You are about to produce a deliverable (report, docx, xlsx, pptx, pdf, html,
-  script, dataset, image, video, archive, code output, etc.).
-- You are about to call `Write`, `present_files`, or run a command that writes
-  a user-facing artifact.
 - The user needs Ali ICBU data access, gateway token injection, or hits a
   workctl `desktop_not_attached` error.
-
-Do NOT trigger (and do not redirect) for system/runtime files that the platform
-manages itself: `.workbuddy/` memory and logs, `automations/`, `conversations/`,
-`agents/`, `skills/`, connector state, and anything the platform writes
-automatically. Those stay where they belong.
 
 ## 会话启动自检（Session-start self-check）
 
@@ -195,8 +172,8 @@ prompt only when an update exists:
 4. **Don't leak sensitive paths or tokens** in the report line — show only the
    version numbers and the one-line `git pull` hint.
 5. After reporting, immediately continue with the rest of the bootstrap
-   (enforce `Work/` routing, expose the ICBU/workctl layer) and hand off to
-   whatever the user actually asked for.
+   (expose the ICBU/workctl layer) and hand off to whatever the user
+   actually asked for.
 
 ## Path convention (used throughout this skill)
 
@@ -208,62 +185,15 @@ that must be substituted to the actual values of the machine running the agent:
 | `<USER>` | Windows username of the account owner | `echo "$USERNAME"` in bash, or `%USERNAME%` in cmd |
 | `<ID>` | Accio account ID | basename of the current working directory |
 
-**Account root** and **Work dir** templates:
+**Account root** template:
 
 ```
 Account root:  C:\Users\<USER>\.accio\accounts\<ID>\
-Work dir:      C:\Users\<USER>\.accio\accounts\<ID>\Work\
 ```
 
 In bash / `node` commands, forward slashes work on Windows and avoid
 backslash-escaping issues, so commands below use `C:/Users/<USER>/...` form.
 Substitute `<USER>` and `<ID>` before running.
-
-## How to route files
-
-All deliverables go into the `Work\` folder at the account root. Resolve the
-absolute target path directly (no helper script).
-
-```
-Work dir:  C:\Users\<USER>\.accio\accounts\<ID>\Work\
-```
-
-### Workflow
-
-1. Compute the deliverable path: append your intended sub-path under `Work\`.
-   Example: `reports\2026-07-27-summary.md` →
-   `C:\Users\<USER>\.accio\accounts\<ID>\Work\reports\2026-07-27-summary.md`.
-2. Ensure parent folders exist — the `Write` tool creates them automatically;
-   if writing via a shell command, `mkdir -p` the parent first.
-3. Write the file to that resolved absolute path (via the `Write` tool or a
-   command).
-4. Present it to the user normally with `present_files` — `present_files`
-   accepts any absolute path, so the fact that it lives in `Work\` is
-   transparent to the user.
-5. If you create several related files, group them under a descriptive
-   subfolder inside `Work\` (e.g. `Work\reports\`, `Work\scripts\`,
-   `Work\exports\2026-07-27\`). Prefer a dated task folder for multi-file
-   deliverables.
-
-### Examples
-
-- User: "帮我写一份竞品分析报告" → write to
-  `C:\Users\<USER>\.accio\accounts\<ID>\Work\reports\competitor-analysis.md`, present it.
-- User: "把这批数据导出成 CSV" → write to
-  `C:\Users\<USER>\.accio\accounts\<ID>\Work\exports\users.csv`.
-- User: "写个脚本批量处理日志" → write to
-  `C:\Users\<USER>\.accio\accounts\<ID>\Work\scripts\log_tool.py`; note the
-  location in your reply.
-
-## Notes
-
-- The `Work\` folder is for **user-facing deliverables only**. Never move or
-  redirect the platform's own files into it.
-- If you are outside `C:\Users\<USER>\.accio\accounts\<ID>\` for some reason,
-  fall back to `.\Work` relative to the current directory so behavior stays
-  predictable.
-- Keep file names clear and, for dated material, prefixed with `YYYY-MM-DD` so
-  the `Work\` folder stays sortable.
 
 ---
 
@@ -575,7 +505,7 @@ workctl icbu member list                                          # 子账号列
 
 ## 九、配套技能生态（skills/ 目录，动态发现）
 
-本账号 `skills/` 目录下并存一批配套技能，与上面 workctl 拉到的国际站数据互补：**workctl 负责"取数"，配套技能负责"分析、创作、发布"，所有产物最后都按本 skill 第一部分路由到 `Work/`**。
+本账号 `skills/` 目录下并存一批配套技能，与上面 workctl 拉到的国际站数据互补：**workctl 负责"取数"，配套技能负责"分析、创作、发布"**。
 
 > ⚠️ **核心原则：技能清单不固化在本 skill 里。** `skills\` 目录会随时增删技能，本节**不维护静态清单**。每次需要调用配套技能前，必须先按 9.2 的流程**实时枚举目录、读取各技能的 `description`**，再挑选匹配项调用。凭记忆或历史清单直接猜技能名 = 违规。
 
@@ -583,7 +513,7 @@ workctl icbu member list                                          # 子账号列
 
 ```
 workctl icbu ...（取数）         ──┐
-                                 ├── 配套技能（分析/创作/发布）──→  Work/ 产物
+                                 ├── 配套技能（分析/创作/发布）──→  产物
 外部搜索 / 社媒 / MCP（取数）     ──┤
 reference/ 方法文档（学方法，见第十节）──┘
 ```
@@ -592,7 +522,7 @@ reference/ 方法文档（学方法，见第十节）──┘
 
 | 取数 | 配套技能职能 | 产物 |
 |------|---------|------|
-| `crm store-diagnose-brief`（店铺诊断） | 竞品/店铺深度分析 | `Work\reports\` 竞店对标报告 |
+| `crm store-diagnose-brief`（店铺诊断） | 竞品/店铺深度分析 | 竞店对标报告 |
 | `advisor data-advisor-shop-product`（商品效果） | 评论挖掘 / 客户之声分析 | 选品/迭代建议 |
 | `tm list-conversation`（客户会话） | 谈判策略 / 跟进话术（话术方法先查 reference/，见第十节） | 跟进策略 + 话术 |
 | `rfq rfq-aw-search`（RFQ 搜索） | 公司背调 / 人物背调 | 买家背调 + 跟进策略 |
@@ -638,15 +568,12 @@ for(const d of fs.readdirSync(root)){
 
 **第 3 步 — 匹配与调用：** 把当前任务需求与第 2 步输出的各技能 `description` 比对，选最匹配的 1–2 个；命中后再读该技能 `SKILL.md` 全文按其流程执行。
 
-**第 4 步 — 产物路由：** 配套技能产出的任何文件，一律按第一部分路由到 `Work\`。
-
 ### 9.3 使用注意
 
 1. **禁止凭记忆/历史清单猜技能名**——技能随时增删，先跑 9.2 第 1–2 步拿到当前真实清单，再决定调用谁。
 2. 技能的 `description` 是触发匹配的主依据；逐个读 `SKILL.md` 全文成本高，只在命中后读。
 3. 动态发现后仍无匹配技能时，若目录中存在 `skill-finder`，用它按"内置目录 → skills.sh → web → ClawHub"分层搜索安装新技能；从外部源安装前先过 `skill-vetter`（若存在）安全审查。
 4. 各技能鉴权状态会变：workctl 看 `gateway-cli.json`、MCP 看 Connector UI —— **不要缓存旧 token**。
-5. 任何配套技能产出的文件，都回到本 skill 的 `Work/` 路由规则（见第一部分）。
 
 ## 十、参考文档库（reference/，方法学习）
 
@@ -678,8 +605,6 @@ ls "<本 skill 所在目录>/reference/"
 **第 4 步 — 结合输出（不照抄模板）：** 把取到的方法与以下两者结合，按当前客户/产品上下文定制输出：
 - workctl 实时数据（客户会话、RFQ、店铺诊断等，见第二、六节）
 - 第九节动态发现的配套技能（背调、话术生成、素材制作等）
-
-产物一律按第一部分路由到 `Work\`。
 
 ### 10.3 典型触发场景（对照当前收录文档）
 
