@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.2
+version: 0.1.3
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -20,11 +20,16 @@ description: >-
   user needs Ali ICBU data access, gateway token injection, or hits workctl
   desktop_not_attached errors. After bootstrap, hand off to the matching
   companion skills dynamically discovered in this account's skills/ directory
-  (never assume a fixed skill list — enumerate and match by description), while
-  still enforcing the Work/ routing rule for every deliverable they produce.
+  (never assume a fixed skill list — enumerate and match by description), and
+  consult this skill's own reference/ library of sales-method playbooks when
+  the task touches negotiation, first-reply, follow-up scripts, quoting,
+  price reduction, customer reactivation, or the sales process (enumerate
+  reference/ and match by each doc's header summary — never assume a fixed
+  doc list), while still enforcing the Work/ routing rule for every
+  deliverable they produce.
 ---
 
-# Accio Work Output Router (v0.1.2)
+# Accio Work Output Router (v0.1.3)
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
@@ -34,7 +39,7 @@ description: >-
 >
 > | Field | Value |
 > |-------|-------|
-> | Version | `0.1.2` |
+> | Version | `0.1.3` |
 > | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
 > | Priority | `primary` — invoke FIRST on every session start |
 > | Domain | TOOMOTOO forklift-parts foreign-trade sales |
@@ -60,6 +65,14 @@ session start:
 3. **Expose the ICBU/workctl data layer** — so downstream sales skills can
    pull real-time store data (store diagnose, conversations, RFQ, products,
    ads, trade, logistics) without re-deriving the auth flow.
+
+In addition, this skill ships a **`reference/` library of sales-method
+playbooks** (see §十). When a task matches a playbook's scenarios —
+negotiation, first-reply, follow-up scripts, quoting, price reduction,
+customer reactivation, sales-team enablement — enumerate `reference/`,
+read the matching playbook, then combine its methods with live workctl data
+and the dynamically discovered companion skills (§九) to give a complete,
+context-specific answer.
 
 The rule: **any file you generate as a deliverable goes into `Work/`**, a
 folder at the account root. That keeps the account root readable and makes it
@@ -108,7 +121,7 @@ and ICBU command list.
 | Local skill dir | `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output` |
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
 | Raw SKILL.md URL | `https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md` |
-| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.2`) |
+| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.3`) |
 
 ### Self-check procedure
 
@@ -165,11 +178,11 @@ prompt only when an update exists:
 
 | Result | What to tell the user |
 |--------|----------------------|
-| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.2)，与 GitHub 一致。" |
-| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.2 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
+| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.3)，与 GitHub 一致。" |
+| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.3 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
 | `DIVERGED` | "⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。如需同步请先 commit 本地改动或手动对比差异。" |
 | `NO_GIT` / `GIT_NO_REMOTE` | Run Step 2. If Step 2 also fails, fall through to offline. |
-| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.2 继续。" |
+| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.3 继续。" |
 
 ### Rules
 
@@ -569,9 +582,10 @@ workctl icbu member list                                          # 子账号列
 ### 9.0 协同范式
 
 ```
-workctl icbu ...（取数）  ──┐
-                          ├── 配套技能（分析/创作/发布）──→  Work/ 产物
-外部搜索 / 社媒 / MCP（取数）──┘
+workctl icbu ...（取数）         ──┐
+                                 ├── 配套技能（分析/创作/发布）──→  Work/ 产物
+外部搜索 / 社媒 / MCP（取数）     ──┤
+reference/ 方法文档（学方法，见第十节）──┘
 ```
 
 典型链路（技能仅按职能描述，实际名字以动态发现结果为准）：
@@ -580,7 +594,7 @@ workctl icbu ...（取数）  ──┐
 |------|---------|------|
 | `crm store-diagnose-brief`（店铺诊断） | 竞品/店铺深度分析 | `Work\reports\` 竞店对标报告 |
 | `advisor data-advisor-shop-product`（商品效果） | 评论挖掘 / 客户之声分析 | 选品/迭代建议 |
-| `tm list-conversation`（客户会话） | 谈判策略 / 跟进话术 | 跟进策略 + 话术 |
+| `tm list-conversation`（客户会话） | 谈判策略 / 跟进话术（话术方法先查 reference/，见第十节） | 跟进策略 + 话术 |
 | `rfq rfq-aw-search`（RFQ 搜索） | 公司背调 / 人物背调 | 买家背调 + 跟进策略 |
 
 ### 9.1 技能目录（唯一事实源）
@@ -634,6 +648,60 @@ for(const d of fs.readdirSync(root)){
 4. 各技能鉴权状态会变：workctl 看 `gateway-cli.json`、MCP 看 Connector UI —— **不要缓存旧 token**。
 5. 任何配套技能产出的文件，都回到本 skill 的 `Work/` 路由规则（见第一部分）。
 
+## 十、参考文档库（reference/，方法学习）
+
+本 skill 自带 `reference/` 目录，存放业务方法类参考文档（销售流程、谈判话术、运营 SOP 等）。它与第九节的配套技能互补：**配套技能负责"怎么做"（工具与流程），reference/ 负责"怎么谈、怎么说"（方法论与话术）**。遇到匹配场景时，先到 reference/ 取方法学习，再结合 workctl 实时数据与动态发现的配套技能，给用户更完备的解答。
+
+> ⚠️ **与第九节同一原则：文档清单不固化在本 skill 里。** `reference/` 会随时增删文档，本节**不维护静态清单**。每次需要查方法前，必须先按 10.2 流程**实时枚举目录、读各文档开头摘要块**，再决定读哪份。凭记忆直接猜文档名 = 违规。
+
+### 10.1 目录与匹配依据
+
+| 项 | 路径 / 说明 |
+|----|------------|
+| 参考文档根目录 | `<本 skill 所在目录>\reference\`（与本 SKILL.md **同级**；每个 `.md` = 一份方法文档。skill 安装/移动到任何位置，`reference/` 都跟随本 skill 目录，不写死绝对路径） |
+| 匹配依据 | 每份文档**开头的摘要块**（`>` 引用，写明覆盖范围与适用场景）——新增文档必须带此摘要块 |
+| 当前收录（示例，以目录实际内容为准） | 《业务谈判-销售全流程》：线索清洗与背调、首回三要素、FABE 多次沟通、报价/降价/催单、已读不回8连击、客户分层与区域化谈判、素材管理与团队赋能 |
+
+### 10.2 查阅流程（遇到匹配场景时按序执行）
+
+**第 1 步 — 枚举目录：**
+
+```bash
+# <本 skill 所在目录> = 本 SKILL.md 被加载的目录（随账号/机器而变，运行时取实际加载路径，勿写死）
+ls "<本 skill 所在目录>/reference/"
+```
+
+**第 2 步 — 读摘要匹配场景：** 逐个读候选文档开头 20–40 行的摘要块，与当前任务场景比对，选最匹配的 1 份（不匹配则不强行引用）。
+
+**第 3 步 — 读全文取方法：** 命中后读该文档相关章节全文，抽取适用的模型、原则、话术。
+
+**第 4 步 — 结合输出（不照抄模板）：** 把取到的方法与以下两者结合，按当前客户/产品上下文定制输出：
+- workctl 实时数据（客户会话、RFQ、店铺诊断等，见第二、六节）
+- 第九节动态发现的配套技能（背调、话术生成、素材制作等）
+
+产物一律按第一部分路由到 `Work\`。
+
+### 10.3 典型触发场景（对照当前收录文档）
+
+| 用户场景 | 应查的方法 |
+|---------|-----------|
+| 新客户询盘怎么回 / 首次触达 | 首回三要素、首回错误示范 |
+| 写产品介绍 / 跟客户讲产品 | FABE 模型（先想客群再写 B）、说人话四原则 |
+| 客户嫌贵 / 要降价 | 报价十六字方针、降价台阶（策略性/互利型） |
+| 客户已读不回 / 要跟进话术 | 已读不回8连击（专业版/温情版）、表情包策略、TM 群发激活 |
+| 催款 / 逼单 | 迂回催单、给出条件、营造紧迫、情绪价值 |
+| 特定区域客户怎么谈（印度/中东/非洲/欧美…） | 客户分层（L1-L4）、区域化谈判、佣金谈判 |
+| 线索值不值得跟 / 客户背调 | 线索清洗标准、背调信息清单与方法 |
+| 销售团队培训 / 话术素材沉淀 | 素材双阵地、新员工卡点培养、投屏检查法 |
+
+> 上表仅对应当前已收录文档；`reference/` 新增文档后，以其摘要块为准重新匹配。
+
+### 10.4 维护规则
+
+1. 新增方法文档直接放进 `reference/`，无需改本 skill（动态枚举）。
+2. 每份文档开头必须有摘要块（`>` 引用），写明覆盖范围与适用场景——这是 10.2 第 2 步匹配的唯一依据。
+3. reference/ 只放"方法"，不放"数据"：客户名单、成交价、账号身份等运行时数据一律走 workctl 实时拉取或本地受控存储，不沉淀进参考文档。
+
 ---
 
-*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能不在本 skill 固化清单，一律按第九节动态发现流程实时枚举后再调用。如有 workctl 版本升级或网关机制变更，请同步更新本 skill。最近一次验证：2026-07-27。*
+*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能不在本 skill 固化清单，一律按第九节动态发现流程实时枚举后再调用；业务方法文档放 `reference/` 并按第十节动态枚举后按需查阅。如有 workctl 版本升级或网关机制变更，请同步更新本 skill。最近一次验证：2026-07-27。*
