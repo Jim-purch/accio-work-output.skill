@@ -12,7 +12,7 @@
 | Priority | `primary` — invoke FIRST on every session start |
 | Domain | TOOMOTOO (Tianjin) International Trading — forklift parts (ICBU cgs seller) |
 | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
-| Last verified | 2026-07-27 |
+| Last verified | 2026-07-28 |
 
 ---
 

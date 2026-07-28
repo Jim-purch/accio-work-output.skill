@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.3
+version: 0.1.4
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -29,7 +29,7 @@ description: >-
   deliverable they produce.
 ---
 
-# Accio Work Output Router (v0.1.3)
+# Accio Work Output Router (v0.1.4)
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
@@ -39,11 +39,11 @@ description: >-
 >
 > | Field | Value |
 > |-------|-------|
-> | Version | `0.1.3` |
+> | Version | `0.1.4` |
 > | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
 > | Priority | `primary` — invoke FIRST on every session start |
 > | Domain | TOOMOTOO forklift-parts foreign-trade sales |
-> | Last verified | 2026-07-27 |
+> | Last verified | 2026-07-28 |
 
 ## What this skill is for
 
@@ -121,7 +121,7 @@ and ICBU command list.
 | Local skill dir | `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output` |
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
 | Raw SKILL.md URL | `https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md` |
-| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.3`) |
+| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.4`) |
 
 ### Self-check procedure
 
@@ -178,11 +178,11 @@ prompt only when an update exists:
 
 | Result | What to tell the user |
 |--------|----------------------|
-| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.3)，与 GitHub 一致。" |
-| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.3 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
+| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.4)，与 GitHub 一致。" |
+| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.4 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
 | `DIVERGED` | "⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。如需同步请先 commit 本地改动或手动对比差异。" |
 | `NO_GIT` / `GIT_NO_REMOTE` | Run Step 2. If Step 2 also fails, fall through to offline. |
-| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.3 继续。" |
+| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.4 继续。" |
 
 ### Rules
 
@@ -660,7 +660,7 @@ for(const d of fs.readdirSync(root)){
 |----|------------|
 | 参考文档根目录 | `<本 skill 所在目录>\reference\`（与本 SKILL.md **同级**；每个 `.md` = 一份方法文档。skill 安装/移动到任何位置，`reference/` 都跟随本 skill 目录，不写死绝对路径） |
 | 匹配依据 | 每份文档**开头的摘要块**（`>` 引用，写明覆盖范围与适用场景）——新增文档必须带此摘要块 |
-| 当前收录（示例，以目录实际内容为准） | 《业务谈判-销售全流程》：线索清洗与背调、首回三要素、FABE 多次沟通、报价/降价/催单、已读不回8连击、客户分层与区域化谈判、素材管理与团队赋能 |
+| 当前收录（示例，以目录实际内容为准） | 《业务谈判-销售全流程》：线索清洗与背调、首回三要素、FABE 多次沟通、报价/降价/催单、已读不回8连击、客户分层与区域化谈判、素材管理与团队赋能；《平台运营-店铺与流量管理》：店铺装修与线上表达、商品发布与内容运营、价格布局与分析、流量推广（P4P/自营销）、询盘分配——**非销售分内工作，运营/老板专用** |
 
 ### 10.2 查阅流程（遇到匹配场景时按序执行）
 
@@ -693,6 +693,7 @@ ls "<本 skill 所在目录>/reference/"
 | 特定区域客户怎么谈（印度/中东/非洲/欧美…） | 客户分层（L1-L4）、区域化谈判、佣金谈判 |
 | 线索值不值得跟 / 客户背调 | 线索清洗标准、背调信息清单与方法 |
 | 销售团队培训 / 话术素材沉淀 | 素材双阵地、新员工卡点培养、投屏检查法 |
+| 店铺装修 / 顶展金品 / 实力标签 / P4P / 价格布局 / 商品发布优化 | 《平台运营-店铺与流量管理》（运营/老板专用，非销售分内工作） |
 
 > 上表仅对应当前已收录文档；`reference/` 新增文档后，以其摘要块为准重新匹配。
 
@@ -704,4 +705,4 @@ ls "<本 skill 所在目录>/reference/"
 
 ---
 
-*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能不在本 skill 固化清单，一律按第九节动态发现流程实时枚举后再调用；业务方法文档放 `reference/` 并按第十节动态枚举后按需查阅。如有 workctl 版本升级或网关机制变更，请同步更新本 skill。最近一次验证：2026-07-27。*
+*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能不在本 skill 固化清单，一律按第九节动态发现流程实时枚举后再调用；业务方法文档放 `reference/` 并按第十节动态枚举后按需查阅。如有 workctl 版本升级或网关机制变更，请同步更新本 skill。最近一次验证：2026-07-28。*
