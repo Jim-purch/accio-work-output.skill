@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.1
+version: 0.1.2
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -18,13 +18,13 @@ description: >-
   say "Work"; (3) provide the Alibaba.com (ICBU) workctl CLI & accio-mcp
   authentication workflow for pulling real-time store data — trigger when the
   user needs Ali ICBU data access, gateway token injection, or hits workctl
-  desktop_not_attached errors. After bootstrap, hand off to specialized sales
-  skills (sales-negotiator, customer-voice-analyzer, company-research, etc.)
-  while still enforcing the Work/ routing rule for every deliverable they
-  produce.
+  desktop_not_attached errors. After bootstrap, hand off to the matching
+  companion skills dynamically discovered in this account's skills/ directory
+  (never assume a fixed skill list — enumerate and match by description), while
+  still enforcing the Work/ routing rule for every deliverable they produce.
 ---
 
-# Accio Work Output Router (v0.1.1)
+# Accio Work Output Router (v0.1.2)
 
 > **Priority / entry-point skill for TOOMOTOO forklift-parts foreign-trade
 > sales.** This skill boots first at the start of every work session in this
@@ -34,7 +34,7 @@ description: >-
 >
 > | Field | Value |
 > |-------|-------|
-> | Version | `0.1.1` |
+> | Version | `0.1.2` |
 > | GitHub repo | https://github.com/Jim-purch/accio-work-output.skill.git |
 > | Priority | `primary` — invoke FIRST on every session start |
 > | Domain | TOOMOTOO forklift-parts foreign-trade sales |
@@ -108,7 +108,7 @@ and ICBU command list.
 | Local skill dir | `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output` |
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
 | Raw SKILL.md URL | `https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md` |
-| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.1`) |
+| Local version | the `version:` field in the local `SKILL.md` frontmatter (currently `0.1.2`) |
 
 ### Self-check procedure
 
@@ -165,11 +165,11 @@ prompt only when an update exists:
 
 | Result | What to tell the user |
 |--------|----------------------|
-| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.1)，与 GitHub 一致。" |
-| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.1 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
+| `UP_TO_DATE` | "✅ 已自检：本 skill 为最新版本 (v0.1.2)，与 GitHub 一致。" |
+| `BEHIND` | "🔄 检测到 GitHub 有新版本 (本地 v0.1.2 → 远端 vX.Y.Z)。是否拉取更新？(`git -C <skill dir> pull origin main`)" — wait for user confirmation before pulling; never auto-overwrite a skill the user is actively editing. |
 | `DIVERGED` | "⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。如需同步请先 commit 本地改动或手动对比差异。" |
 | `NO_GIT` / `GIT_NO_REMOTE` | Run Step 2. If Step 2 also fails, fall through to offline. |
-| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.1 继续。" |
+| offline (Step 3) | "ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地 v0.1.2 继续。" |
 
 ### Rules
 
@@ -560,9 +560,11 @@ workctl icbu member list                                          # 子账号列
 4. 网关重启后凭证失效，需重新读取 gateway-cli.json
 5. 涉及客户数据的查询与归档带"负责销售"过滤，不跨销售共享客户信息
 
-## 九、配套技能生态（skills/ 目录）
+## 九、配套技能生态（skills/ 目录，动态发现）
 
-本账号 `skills/` 目录下并存一批配套技能，覆盖"平台工具 / 销售与客户 / 营销文案 / SEO 流量 / 内容社媒 / Skill 工程"几大类。它们与上面 workctl 拉到的国际站数据互补：**workctl 负责"取数"，配套技能负责"分析、创作、发布"，所有产物最后都按本 skill 第一部分路由到 `Work/`**。
+本账号 `skills/` 目录下并存一批配套技能，与上面 workctl 拉到的国际站数据互补：**workctl 负责"取数"，配套技能负责"分析、创作、发布"，所有产物最后都按本 skill 第一部分路由到 `Work/`**。
+
+> ⚠️ **核心原则：技能清单不固化在本 skill 里。** `skills\` 目录会随时增删技能，本节**不维护静态清单**。每次需要调用配套技能前，必须先按 9.2 的流程**实时枚举目录、读取各技能的 `description`**，再挑选匹配项调用。凭记忆或历史清单直接猜技能名 = 违规。
 
 ### 9.0 协同范式
 
@@ -572,83 +574,66 @@ workctl icbu ...（取数）  ──┐
 外部搜索 / 社媒 / MCP（取数）──┘
 ```
 
-典型链路：
+典型链路（技能仅按职能描述，实际名字以动态发现结果为准）：
 
-| 取数 | 配套技能 | 产物 |
+| 取数 | 配套技能职能 | 产物 |
 |------|---------|------|
-| `crm store-diagnose-brief`（店铺诊断） | `competitor-deep-analysis` | `Work\reports\` 竞店对标报告 |
-| `advisor data-advisor-shop-product`（商品效果） | `customer-voice-analyzer` | 选品/迭代建议 |
-| `tm list-conversation`（客户会话） |
-| `rfq rfq-aw-search`（RFQ 搜索） | `company-research` / `people-research` | 买家背调 + 跟进策略 |
+| `crm store-diagnose-brief`（店铺诊断） | 竞品/店铺深度分析 | `Work\reports\` 竞店对标报告 |
+| `advisor data-advisor-shop-product`（商品效果） | 评论挖掘 / 客户之声分析 | 选品/迭代建议 |
+| `tm list-conversation`（客户会话） | 谈判策略 / 跟进话术 | 跟进策略 + 话术 |
+| `rfq rfq-aw-search`（RFQ 搜索） | 公司背调 / 人物背调 | 买家背调 + 跟进策略 |
 
-### 9.1 平台工具与协作
+### 9.1 技能目录（唯一事实源）
 
-| 技能 | 作用 | 备注 |
-|------|------|------|
-| `accio-work-output`（本 skill，**priority / entry-point**） | 会话启动自检 GitHub 更新；所有产物路由到 `Work/`；记录 workctl/网关鉴权机制 | **每次会话启动时首先触发**；产出任何文件时再次触发 |
-| `accio-mcp-cli` | 用 CLI 发现/搜索/调用 MCP 工具（Gmail、Twitter、Notion、Square、Apify 等），鉴权自动 | 工作流：`toolkit → search → call`，避免 `list`（150+ 工具刷屏） |
-| `lark-tools` | 用 `lark-cli` 操作飞书（文档/表格/Base/日历/任务/邮件/会议/IM） | 鉴权走 Connector UI（Settings → Connectors → Lark）；先 `lark-cli auth status` 再业务命令 |
+| 项 | 路径 / 说明 |
+|----|------------|
+| 技能根目录 | `C:\Users\<USER>\.accio\accounts\<ID>\skills\`（每个子目录 = 一个技能，目录名即技能名） |
+| 辅助索引 | `C:\Users\<USER>\.accio\accounts\<ID>\skills\skills_config.json`（若存在可作参考；**以目录实际内容为准**） |
+| 单技能元数据 | `skills\<技能名>\SKILL.md` 的 frontmatter：`name` + `description`（触发匹配的主依据） |
+| 本 skill | `skills\accio-work-output\`（priority / entry-point，每次会话启动时首先触发） |
 
-### 9.2 销售与客户（与 workctl 客服 / RFQ 数据强相关）
+### 9.2 动态发现与调用流程（必须按序执行）
 
-| 技能 | 作用 |
-|------|------|
-| `sales-negotiator` | B2B 谈判策略：锚定、BATNA、定价、合同条款、多方谈判 |
-| `customer-voice-analyzer` | 从评论里挖出画像/场景/优缺点/未满足需求/购买动机 6 维 |
-| `company-research` | 用 Exa 调研公司：竞品、新闻、财务、LinkedIn |
-| `people-research` | 用 Exa 找人：LinkedIn、专家、团队成员、公开 bio |
-| `competitor-deep-analysis` | 多层情报 + 评论挖掘，找市场空白与差异化优势 |
+**第 1 步 — 枚举当前实际安装的技能：**
 
-### 9.3 营销与文案
+```bash
+# 把 <USER> 和 <ID> 替换为本机实际值；列出 skills/ 下所有技能目录
+ls "C:/Users/<USER>/.accio/accounts/<ID>/skills/"
+```
 
-| 技能 | 作用 |
-|------|------|
-| `copywriting` | 落地页/定价/产品/关于页等营销文案写作与改写 |
-| `product-description-generator` | 生成 Amazon/Shopify/eBay/Etsy 的 SEO 产品描述 |
-| `marketing-psychology` | 70+ 心智模型用于营销说服 |
-| `marketing-ideas` | 140+ 营销打法（按类目） |
-| `launch-strategy` | 分阶段发布、渠道、Product Hunt/早鸟/候补 |
-| `cart-abandonment-recovery` | 弃购挽回邮件 + SMS 序列 |
-| `ab-test-setup` | A/B 测试设计与假设 |
+**第 2 步 — 批量读取各技能的 name + description**（一条命令拿到全量触发依据；已处理多行折叠 description）：
 
-### 9.4 SEO 与流量
+```bash
+node -e "
+const fs=require('fs'),path=require('path');
+const root='C:/Users/<USER>/.accio/accounts/<ID>/skills';
+for(const d of fs.readdirSync(root)){
+  const p=path.join(root,d,'SKILL.md');
+  if(!fs.existsSync(p)) continue;
+  const fm=(fs.readFileSync(p,'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---/)||[])[1];
+  if(!fm){console.log(d+' :: (no frontmatter)');continue;}
+  let name=d,desc='',cur='';
+  for(const l of fm.split(/\r?\n/)){
+    const kv=l.match(/^(\w+):\s*(.*)$/);
+    if(kv){cur=kv[1];if(cur==='name')name=kv[2].trim();if(cur==='description')desc=kv[2].replace(/^>-?\s*/,'').trim();}
+    else if(cur==='description'&&/^\s+\S/.test(l))desc+=' '+l.trim();
+  }
+  console.log(name+' :: '+desc.trim().slice(0,300));
+}"
+```
 
-| 技能 | 作用 |
-|------|------|
-| `seo-keyword-research` | 高价值关键词 + 意图分类 + 主题簇 + GEO |
-| `seo-page-audit` | 单页 SEO 体检，0-100 评分 + 优先级建议 |
-| `seo-competitor-analysis` | 深度 SEO 竞品：关键词/外链/内容策略 |
-| `ecommerce-seo-optimizer` | 电商页 meta 框架、JSON-LD、抓取管理 |
-| `programmatic-seo-strategist` | 程序化 SEO：模板化长尾页 |
-| `serp-ranking-analyzer` | SERP 深析：排名因子、意图、特征机会 |
-| `etsy-seo-optimizer` | Etsy listing SEO（eRank 数据） |
+**第 3 步 — 匹配与调用：** 把当前任务需求与第 2 步输出的各技能 `description` 比对，选最匹配的 1–2 个；命中后再读该技能 `SKILL.md` 全文按其流程执行。
 
-### 9.5 内容与社媒
+**第 4 步 — 产物路由：** 配套技能产出的任何文件，一律按第一部分路由到 `Work\`。
 
-| 技能 | 作用 |
-|------|------|
-| `social-media-publisher` | 发 Instagram / X（图文、话题、@、多平台） |
-| `image-prompt-guide` | AI 图片生成/编辑 prompt 与工具路由（含电商图集、白底、水印清理、HD 放大等） |
-| `remotion` | 用 React 做视频 |
+### 9.3 使用注意
 
-### 9.6 Skill 工程（管理 skills/ 本身）
-
-| 技能 | 作用 |
-|------|------|
-| `skill-creator` | 创建/修改/评测 skill，优化 description 触发率 |
-| `skill-finder` | 分层发现并安装 skill（内置目录 → skills.sh → web → ClawHub） |
-| `skill-vetter` | 安装前安全审查（红旗、权限、可疑模式） |
-| `self-improvement` | 把错误/纠正/反思写进每日日记，持续改进 |
-| `plugin-create` | 脚手架/打包 plugin ZIP |
-
-### 9.7 使用注意
-
-1. 配套技能的 `description` 是触发主依据；不确定某能力是否被覆盖时，先用 `skill-finder` 搜，不要凭记忆猜。
-2. 从外部源（ClawHub / GitHub）装新 skill 前，先用 `skill-vetter` 审一遍。
-3. 各技能鉴权状态会变：workctl 看 `gateway-cli.json`、飞书看 `lark-cli auth status`、MCP 看 Connector UI —— **不要缓存旧 token**。
-4. 任何配套技能产出的文件，都回到本 skill 的 `Work/` 路由规则（见第一部分）。
-5. 技能清单会随 `C:\Users\<USER>\.accio\accounts\<ID>\skills\` 目录增减而变化，使用前用 `ls C:\Users\<USER>\.accio\accounts\<ID>\skills\` 或读 `C:\Users\<USER>\.accio\accounts\<ID>\skills\skills_config.json` 确认当前实际可用项，勿照搬本节清单。
+1. **禁止凭记忆/历史清单猜技能名**——技能随时增删，先跑 9.2 第 1–2 步拿到当前真实清单，再决定调用谁。
+2. 技能的 `description` 是触发匹配的主依据；逐个读 `SKILL.md` 全文成本高，只在命中后读。
+3. 动态发现后仍无匹配技能时，若目录中存在 `skill-finder`，用它按"内置目录 → skills.sh → web → ClawHub"分层搜索安装新技能；从外部源安装前先过 `skill-vetter`（若存在）安全审查。
+4. 各技能鉴权状态会变：workctl 看 `gateway-cli.json`、MCP 看 Connector UI —— **不要缓存旧 token**。
+5. 任何配套技能产出的文件，都回到本 skill 的 `Work/` 路由规则（见第一部分）。
 
 ---
 
-*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能清单见第九节。如有 workctl 版本升级、网关机制变更或 skills/ 目录新增/移除技能，请同步更新本 skill。最近一次验证：2026-07-27。*
+*本 skill 只记录稳定的机制与方法。账号身份、workctl 版本、网关端口、子账号人员等运行时值请按各节指引动态读取；配套技能不在本 skill 固化清单，一律按第九节动态发现流程实时枚举后再调用。如有 workctl 版本升级或网关机制变更，请同步更新本 skill。最近一次验证：2026-07-27。*

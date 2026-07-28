@@ -21,9 +21,9 @@
 `accio-work-output` is the **entry-point skill** of the TOOMOTOO forklift-parts
 foreign-trade sales workspace. It is intentionally small in scope: it does
 three bootstrap jobs at the start of every work session, then hands off to
-specialized sales skills (`sales-negotiator`, `customer-voice-analyzer`,
-`company-research`, `competitor-deep-analysis`, `copywriting`, the SEO &
-social skills, …) while continuing to enforce one global rule for every file
+the matching companion skills — discovered dynamically in the account's
+`skills/` directory at runtime, never assumed from a fixed list (see
+`SKILL.md` §九) — while continuing to enforce one global rule for every file
 those downstream skills produce.
 
 The three bootstrap jobs:
@@ -45,8 +45,10 @@ time any skill (or the user) is about to write a deliverable, this skill's
 
 ## Why a "priority / entry-point" skill?
 
-The TOOMOTOO account has 20+ cooperating skills (`sales-negotiator`,
-`copywriting`, the SEO suite, `accio-mcp-cli`, `lark-tools`, …). Without an
+The TOOMOTOO account has 20+ cooperating skills installed under `skills/`
+(the set changes over time — the agent enumerates the directory and matches
+each skill's `description` at runtime rather than relying on a hardcoded
+list). Without an
 explicit entry point, the agent has to guess which skill to load first, and
 the ICBU auth flow + `Work/` routing rule get re-derived or skipped entirely.
 This skill makes the ordering explicit: **it loads first, every session**, so
