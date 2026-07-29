@@ -1,6 +1,6 @@
 ---
 name: accio-work-output
-version: 0.1.6
+version: 0.1.7
 github_repo: https://github.com/Jim-purch/accio-work-output.skill.git
 priority: primary
 domain: forklift-parts-foreign-trade-sales
@@ -96,6 +96,9 @@ and ICBU command list.
 | Name | Value |
 |------|-------|
 | GitHub repo URL | `https://github.com/Jim-purch/accio-work-output.skill.git` |
+| Latest-release API | `https://api.github.com/repos/Jim-purch/accio-work-output.skill/releases/latest` |
+| Remote version source | the `tag_name` field of the latest non-prerelease GitHub Release (leading `v` stripped, e.g. `v0.1.6` → `0.1.6`) |
+| Local version source | the `version:` field of THIS skill's loaded frontmatter (in agent memory at load time — do NOT re-read from disk) |
 
 ### Self-check procedure
 
@@ -107,22 +110,31 @@ succeeds and skip the rest.
 > files not yet materialized, so reading the on-disk `SKILL.md` to get the
 > local version is unreliable. The local version is already known from this
 > skill's loaded frontmatter (`version:` field — in the agent's memory at
-> load time), and the remote version is fetched from the GitHub public repo.
-> GitHub is the single source of truth for "latest"; the on-disk local file
-> is never read for the check.
+> load time), and the remote version is the `tag_name` of the latest
+> non-prerelease **GitHub Release** (leading `v` stripped). GitHub Releases
+> is the single source of truth for "latest published version" — it reflects
+> what the maintainer actually shipped, rather than the raw `main` branch
+> head which may carry unfinished work. The on-disk local file is never read
+> for the check.
 
-**Step 1 — fetch remote version from GitHub (the only network call).**
+**Step 1 — fetch the latest published version from GitHub Releases (the only network call).**
 
-Fetch only the remote `SKILL.md` frontmatter and read its `version:` field.
-The local version is the `version:` field of **this skill's own frontmatter**
-(known in-memory from loading this skill — **do NOT** re-read it from the
-on-disk `SKILL.md` via `sed`/shell, which breaks on empty new-install dirs).
+Query the GitHub Releases API for the latest non-prerelease release and read
+its `tag_name` (e.g. `v0.1.6`), stripping the leading `v`. The local version
+is the `version:` field of **this skill's own frontmatter** (known in-memory
+from loading this skill — **do NOT** re-read it from the on-disk `SKILL.md`
+via `sed`/shell, which breaks on empty new-install dirs).
 
 ```bash
-# Remote version — from the GitHub public repo (raw). No <USER>/<ID> needed.
+# Remote version — latest non-prerelease GitHub Release. No <USER>/<ID> needed.
+# Public API: 60 req/h unauthenticated, but this runs once per session so fine.
+# JSON is parsed with node (available in this environment) — more robust than
+# sed for JSON. Any parse/network error → REMOTE_VER empty → falls through to Step 2.
+# Note: returns 404 if the repo has no published releases → also falls through to Step 2.
 REMOTE_VER=$(curl -fsSL --max-time 8 \
-  "https://raw.githubusercontent.com/Jim-purch/accio-work-output.skill/main/SKILL.md" \
-  | sed -n 's/^version:[[:space:]]*//p' | head -1)
+  "https://api.github.com/repos/Jim-purch/accio-work-output.skill/releases/latest" \
+  | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const t=JSON.parse(s).tag_name||'';process.stdout.write(t.replace(/^v/,''))}catch(e){process.exit(1)}})" \
+  | head -1)
 # LOCAL_VER = the version: field of THIS skill's loaded frontmatter
 # (the single hard-coded version at the top of this file) — already in the
 # agent's memory; do NOT read from disk.
@@ -147,9 +159,9 @@ prompt only when an update exists:
 
 > Placeholders `{LOCAL_VER}` / `{REMOTE_VER}` below are filled from the
 > self-check variables above (`LOCAL_VER` = this skill's frontmatter
-> `version:`, `REMOTE_VER` = the value fetched from GitHub). Never hard-code
-> the version number in these messages — it must always come from the single
-> source of truth at the top of this file.
+> `version:`, `REMOTE_VER` = the latest release `tag_name` from the GitHub
+> Releases API, leading `v` stripped). Never hard-code the version number in
+> these messages.
 
 | Result | What to tell the user |
 |--------|----------------------|

@@ -58,22 +58,21 @@ begins.
 ## Session-start self-check
 
 On the first message of every session, the skill silently checks whether the
-local copy is in sync with GitHub. It tries three strategies in order and
-stops at the first that works:
+local copy is in sync with GitHub. It tries two steps in order and stops at
+the first that works:
 
-1. **`git fetch` + rev compare** (preferred, when the skill folder is a git
-   clone of this repo).
-2. **Raw `SKILL.md` version compare** (fallback when the folder was installed
-   by copy — fetches only the remote frontmatter `version:` field and
-   compares semver).
-3. **Offline / network blocked** — skip silently, proceed with the local copy.
+1. **GitHub Releases API** — fetches the latest non-prerelease release's
+   `tag_name` (e.g. `v0.1.6`), strips the leading `v`, and compares semver
+   against the local frontmatter `version:` field. This reflects what the
+   maintainer actually shipped, rather than the raw `main` branch head which
+   may carry unfinished work.
+2. **Offline / network blocked** — skip silently, proceed with the local copy.
 
 The user sees one short line:
 
 - `✅ 已自检：本 skill 为最新版本，与 GitHub 一致。`
 - `🔄 检测到 GitHub 有新版本。是否拉取更新？` — only
   *prompts*; never auto-pulls. The user may have local edits in flight.
-- `⚠️ 本地 skill 与 GitHub 出现分叉（本地有未推送的修改）。…`
 - `ℹ️ 未能连接 GitHub 检查更新（网络受限），本次会话使用本地版本继续。`
 
 Rules: run once per session (not per message), never block the session on the
@@ -132,7 +131,7 @@ matrix live in `SKILL.md` → *阿里国际站 workctl & accio-mcp 鉴权经验*
 
 ## Installation
 
-### Option A — clone (recommended, enables the self-check's Step 1)
+### Option A — clone (recommended, makes pulling updates easier)
 
 ```bash
 # <USER> and <ID> are the Windows username and Accio account ID
@@ -144,7 +143,7 @@ git clone https://github.com/Jim-purch/accio-work-output.skill.git "$SKILL_DIR"
 
 Copy this folder (or just `SKILL.md`) into
 `C:\Users\<USER>\.accio\accounts\<ID>\skills\accio-work-output\`. The
-self-check will fall back to Step 2 (raw `SKILL.md` version compare).
+self-check will fall back to Step 2 (offline / network blocked).
 
 ### Verify
 
